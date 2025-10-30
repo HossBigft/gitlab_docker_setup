@@ -1,0 +1,58 @@
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:18.3.5-ce.0
+    container_name: gitlab
+    restart: always
+    hostname: '$GITLAB_DOMAIN'
+    env_file:
+      .env
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        # Add any other gitlab.rb configuration here, each on its own line
+        external_url 'http://$GITLAB_DOMAIN';
+        puma['worker_processes'] = 0;
+        sidekiq['concurrency'] = 5;
+        mattermost['enable'] = false;
+        mattermost_nginx['enable'] = false;
+        prometheus['enable'] = false;
+        alertmanager['enable'] = false;
+        prometheus_monitoring['enable'] = false;
+        postgres_exporter['enable'] = false;
+        pgbouncer_exporter['enable'] = false;
+        node_exporter['enable'] = false;
+        redis_exporter['enable'] = false;
+        monitoring_role['enable'] = false;
+        gitlab_exporter['enable'] = false;
+        gitaly['configuration'] = {
+            concurrency: [
+              {
+                'rpc' => "/gitaly.SmartHTTPService/PostReceivePack",
+                'max_per_repo' => 3,
+              }, {
+                'rpc' => "/gitaly.SSHService/SSHUploadPack",
+                'max_per_repo' => 3,
+              },
+            ],
+            cgroups: {
+                repositories: {
+                    count: 2,
+                },
+                mountpoint: '/sys/fs/cgroup',
+                hierarchy_root: 'gitaly',
+                memory_bytes: 500000,
+                cpu_shares: 512,
+            },
+        };
+
+        gitaly['env'] = {
+          'GITALY_COMMAND_SPAWN_MAX_PARALLEL' => '2'
+        };
+    ports:
+      - '80:80'
+      - '443:443'
+      - '22:22'
+    volumes:
+      - '$GITLAB_HOME/config:/etc/gitlab'
+      - '$GITLAB_HOME/logs:/var/log/gitlab'
+      - '$GITLAB_HOME/data:/var/opt/gitlab'
+    shm_size: '256m'
