@@ -1,0 +1,4 @@
+#gitlab.example.com
+GITLAB_DOMAIN=
+# dir for gitlab files
+GITLAB_HOME=/srv/gitlab
