@@ -27,7 +27,7 @@ services:
       - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
       - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
       # traefik-http set up only to use the middleware to redirect to https
-      - traefik.http.routers.traefik-dashboard-http.middlewares=https-redirect
+      - traefik.http.routers.traefik-dashboard-http.middlewares=https-redirect,ip-allowlist
       # admin-auth middleware with HTTP Basic auth
       # Using the environment variables USERNAME and HASHED_PASSWORD
       # HASHED_PASSWORD can be generated with openssl passwd -apr1 "$PASSWORD"
@@ -37,7 +37,6 @@ services:
       - traefik.http.middlewares.ip-allowlist.ipallowlist.sourcerange=${ALLOWED_IPS:-0.0.0.0/0}
       # Enable HTTP Basic auth, using the middleware created above. Enable whitelisting, if IPs are given
       - traefik.http.routers.traefik-dashboard-https.middlewares=admin-auth,ip-allowlist
-      - traefik.http.routers.traefik-dashboard-http.middlewares=ip-allowlist
     volumes:
       # Add Docker as a mounted volume, so that Traefik can read the labels of other services
       - /var/run/docker.sock:/var/run/docker.sock:ro
