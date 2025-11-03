@@ -53,16 +53,14 @@ is_traefik_ready() {
 
     log INFO "Waiting for Traefik dashboard at $dashboard_url..."
 
-    i=0
-    while [ "$i" -lt 60 ]; do
-        status_code=$(curl -sk -o /dev/null -w "%{http_code}" "$dashboard_url" -m 5 --connect-to "$dashboard_url:127.0.0.1:80" || echo "timeout")
-        if [ "$status_code" = "200" ] || [ "$status_code" = "401" ] || [ "$status_code" = "403" ]; then
-            log INFO "Traefik dashboard is up (HTTP $status_code)."
-            return
-        fi
-        sleep 2
-        i=$((i + 1))
-    done
+    HTTP_TIMEOUT_S=5
+    
+    status_code=$(curl -sk -o /dev/null -w "%{http_code}" "$dashboard_url" -m "$HTTP_TIMEOUT_S" --connect-to "$dashboard_url:127.0.0.1:80" || echo "timeout")
+
+    if [ "$status_code" = "200" ] || [ "$status_code" = "401" ] || [ "$status_code" = "403" ]; then
+        log INFO "Traefik dashboard is up (HTTP $status_code)."
+        return
+    fi
 
     log ERROR "Traefik dashboard did not become ready in time."
     exit 1
