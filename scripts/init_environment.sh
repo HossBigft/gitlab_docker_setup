@@ -53,22 +53,21 @@ is_traefik_ready() {
     TRAEFIK_DASHBOARD_DOMAIN="traefik.${GITLAB_DOMAIN}"
     log INFO "Waiting for Traefik dashboard at $dashboard_url..."
 
+
     HTTP_TIMEOUT_S=5
+    REQUEST_TIMEOUT_S=60
+    i=0
+    while [ "$i" -lt "$REQUEST_TIMEOUT_S" ]; do
+        status_code=$(curl -sk -o /dev/null -w "%{http_code}" "$dashboard_url" -m "$HTTP_TIMEOUT_S"  --connect-to "$TRAEFIK_DASHBOARD_DOMAIN:80:127.0.0.1:80" || echo "000")
 
-    status_code=$(curl -sk -o /dev/null -w "%{http_code}" "$dashboard_url" -m "$HTTP_TIMEOUT_S" --connect-to "$TRAEFIK_DASHBOARD_DOMAIN:80:127.0.0.1:80" || echo "000")
+        if [ "$status_code" = "200" ] || [ "$status_code" = "401" ] || [ "$status_code" = "403" ]; then
+            log INFO "Traefik dashboard is up (HTTP $status_code)."
+            return
+        fi
 
-    curl_exit=$?
-
-    if [ "$curl_exit" -ne 0 ]; then
-        log ERROR "Curl failed (exit code $curl_exit)"
-        return 1
-    fi
-
-
-    if [ "$status_code" = "200" ] || [ "$status_code" = "401" ] || [ "$status_code" = "403" ]; then
-        log INFO "Traefik dashboard is up (HTTP $status_code)."
-        return 0
-    fi
+        sleep 1
+        i=$((i + 1))
+    done
 
     log ERROR "Traefik dashboard did not become ready in time. HTTP response code $status_code"
     return 1
