@@ -62,7 +62,7 @@ is_traefik_ready() {
         return
     fi
 
-    log ERROR "Traefik dashboard did not become ready in time."
+    log ERROR "Traefik dashboard did not become ready in time. HTTP response code $status_code"
     exit 1
 }
 
