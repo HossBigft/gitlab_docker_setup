@@ -55,15 +55,23 @@ is_traefik_ready() {
 
     HTTP_TIMEOUT_S=5
 
-    status_code=$(curl -sk -o /dev/null -w "%{http_code}" "$dashboard_url" -m "$HTTP_TIMEOUT_S" --connect-to "$TRAEFIK_DASHBOARD_DOMAIN:80:127.0.0.1:80" || echo "timeout")
+    status_code=$(curl -sk -o /dev/null -w "%{http_code}" "$dashboard_url" -m "$HTTP_TIMEOUT_S" --connect-to "$TRAEFIK_DASHBOARD_DOMAIN:80:127.0.0.1:80" || echo "000")
+
+    curl_exit=$?
+
+    if [ "$curl_exit" -ne 0 ]; then
+        log ERROR "Curl failed (exit code $curl_exit)"
+        return 1
+    fi
+
 
     if [ "$status_code" = "200" ] || [ "$status_code" = "401" ] || [ "$status_code" = "403" ]; then
         log INFO "Traefik dashboard is up (HTTP $status_code)."
-        return
+        return 0
     fi
 
     log ERROR "Traefik dashboard did not become ready in time. HTTP response code $status_code"
-    exit 1
+    return 1
 }
 
 create_traefik_network_if_needed() {
