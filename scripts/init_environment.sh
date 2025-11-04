@@ -60,10 +60,13 @@ is_traefik_ready() {
     while [ "$i" -lt "$REQUEST_TIMEOUT_S" ]; do
         status_code=$(curl -sk -o /dev/null -w "%{http_code}" "$dashboard_url" -m "$HTTP_TIMEOUT_S"  --connect-to "$TRAEFIK_DASHBOARD_DOMAIN:80:127.0.0.1:80" || echo "000")
 
-        if [ "$status_code" = "200" ] || [ "$status_code" = "401" ] || [ "$status_code" = "403" ]; then
+        if [ "$status_code" = "200" ] || [ "$status_code" = "401" ] || [ "$status_code" = "403" ] ; then
             log INFO "Traefik dashboard is up (HTTP $status_code)."
             return
+        else
+            echo "Traefik HTTP response code  $status_code. Attempt $i. Retrying..."
         fi
+
 
         sleep 1
         i=$((i + 1))
